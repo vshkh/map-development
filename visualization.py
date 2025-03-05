@@ -303,10 +303,6 @@ def plot_combined_maps(biome_map, river_map, resource_map):
     plt.tight_layout()
     plt.show()
 
-import matplotlib.pyplot as plt
-import numpy as np
-import matplotlib.patches as mpatches
-
 def plot_village_expansion(biome_map, village_tiles):
     """
     Visualizes village expansion on the biome map.
