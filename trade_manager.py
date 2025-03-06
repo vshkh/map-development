@@ -28,12 +28,13 @@ class TradeManager:
                     partner.resources["supply"] -= trade_amount
                     #print(f"Trade successful! {trade_amount} supply sent from {partner.position} to {village.position}.")
                     self.trade_log.append((partner.position, village.position, True))  # Log successful trade
+                    self.world.relationship_manager.handle_event(village, partner, "trade")  # Increase relationship
                 else:
                     lost_pop = random.randint(5, 15)  # Plundering event
                     village.population = max(0, village.population - lost_pop)
                     #print(f"Trade failed! Bandits attacked {village.position}, {lost_pop} people were lost.")
                     self.trade_log.append((partner.position, village.position, False))  # Log failed trade
-
+            
     def calculate_distance(self, pos1, pos2):
         """Calculates Manhattan distance between two positions."""
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])

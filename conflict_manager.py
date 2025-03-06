@@ -21,26 +21,16 @@ class ConflictManager:
         return random.choice(candidates) if candidates else None 
 
     def attempt_raid(self, village):
-        if random.random() < PERCENT_OF_RAID:
-            target = self.find_raid_target(village)
-            if target:
-                if target.position == village.position:
-                    pass
-                elif random.random() < PERCENT_OF_SUCCESS:
-                    stolen_supply = random.randint(15, 40)
-                    village.resources["supply"] += stolen_supply
-                    # Reduce both supply (by how much was stolen) and security by 10:
-                    target.resources["supply"] = max(0, target.resources["supply"] - stolen_supply)
-                    target.resources["security"] = max(0, target.resources["security"] - 10)
-                    print(f"Raid successful! {village.position} raided {target.position}, stealing {stolen_supply} supply.")
-                    self.raid_log.append((village.position, target.position, True))
-                else:
-                    # Raid attempt does not work, and is logged as a failure.
-                    lost_pop = random.randint(5, 15)
-                    village.population = max(0, village.population - lost_pop)
-                    print(f"Raid failed! {village.position} raided {target.position}, and were unsuccessful.")
-                    self.raid_log.append((village.position, target.position, False))
-    
+        """Villages raid if the relationship is below a certain threshold."""
+        target = self.find_raid_target(village)
+        if target and self.world.relationship_manager.get_relationship(village, target) < 40:
+            if random.random() < PERCENT_OF_SUCCESS:
+                stolen_supply = random.randint(15, 40)
+                village.resources["supply"] += stolen_supply
+                target.resources["supply"] -= stolen_supply
+                target.resources["security"] -= 10
+                self.world.relationship_manager.handle_event(village, target, "raid")  # Decrease relationship
+
     def calculate_distance(self, pos1, pos2):
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 

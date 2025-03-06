@@ -3,6 +3,7 @@ from village import Village
 from migration_manager import MigrationManager
 from trade_manager import TradeManager
 from conflict_manager import ConflictManager
+from relationship_manager import RelationshipManager
 from visualization import plot_world_map, plot_migration_events
 
 class World:
@@ -13,6 +14,7 @@ class World:
         self.migration_manager = MigrationManager(self)
         self.trade_manager = TradeManager(self)
         self.conflict_manager = ConflictManager(self)
+        self.relationship_manager = RelationshipManager(self)
         self.num_villages = num_villages
         self.migration_log = []  # Track migration events
         self.collapsed_villages = []  # Track collapsed village locations
@@ -41,16 +43,24 @@ class World:
     def update(self, turn):
         """Updates all villages each turn, handles migration, trade, and removes collapsed villages."""
         total_migrants = 0
+
+        for village in self.villages:
+                    partner = self.trade_manager.find_trade_partner(village)
+                    if partner:
+                        relationship = self.relationship_manager.get_relationship(village, partner)
+                        if relationship > 60:
+                            self.trade_manager.attempt_trade(village)
+                        elif relationship < 40:
+                            self.conflict_manager.attempt_raid(village)
+
         for village in self.villages[:]:  # Copy list to avoid modification issues
             migrants = self.migration_manager.handle_migration(village)
             if migrants:
                 total_migrants += migrants
-            self.trade_manager.attempt_trade(village)
-            self.conflict_manager.attempt_raid(village)
             if not village.update():
                 self.collapsed_villages.append(village.position)  # Track collapsed villages
                 self.villages.remove(village)
-                #print("A village has collapsed!")
+                print("A village has collapsed!")
         
         self.migration_log.append((turn, total_migrants))  # Log migration events
     
