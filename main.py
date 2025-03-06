@@ -1,5 +1,5 @@
 from visualization import plot_maps, plot_enlarged_biome_map, plot_livestock_map, plot_resource_map, plot_village_expansion, plot_world_map, plot_migration_events
-from map import MapGenerator
+from world_gen import MapGenerator
 from world import World
 import matplotlib.pyplot as plt
 

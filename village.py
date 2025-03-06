@@ -1,7 +1,4 @@
-from supply_manager import SupplyManager
-from security_manager import SecurityManager
-from satisfaction_manager import SatisfactionManager
-from expansion_manager import ExpansionManager
+from managers import *
 from settlement import Settlement
 
 import random

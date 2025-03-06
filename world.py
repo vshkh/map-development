@@ -1,9 +1,6 @@
 import random
 from village import Village
-from migration_manager import MigrationManager
-from trade_manager import TradeManager
-from conflict_manager import ConflictManager
-from relationship_manager import RelationshipManager
+from managers import *
 from visualization import plot_world_map, plot_migration_events
 
 class World:
