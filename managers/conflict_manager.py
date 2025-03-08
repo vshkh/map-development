@@ -21,15 +21,14 @@ class ConflictManager:
         return random.choice(candidates) if candidates else None 
 
     def attempt_raid(self, village):
-        """Villages raid if the relationship is below a certain threshold."""
         target = self.find_raid_target(village)
-        if target and self.world.relationship_manager.get_relationship(village, target) < 40:
+        if target:
             if random.random() < PERCENT_OF_SUCCESS:
                 stolen_supply = random.randint(15, 40)
                 village.resources["supply"] += stolen_supply
                 target.resources["supply"] -= stolen_supply
                 target.resources["security"] -= 10
-                self.world.relationship_manager.handle_event(village, target, "raid")  # Decrease relationship
+                self.raid_log.append((village.position, target.position, True))
 
     def calculate_distance(self, pos1, pos2):
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])

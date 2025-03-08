@@ -17,5 +17,5 @@ __all__ = [
     "ExpansionManager",
     "SupplyManager",
     "SatisfactionManager",
-    "RelationshipManager",
+    "RelationshipManager"
 ]

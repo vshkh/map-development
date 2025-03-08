@@ -1,8 +1,8 @@
 # map.py
 import numpy as np
-from terrain import generate_elevation, generate_temperature, generate_moisture, adjust_moisture_for_rivers
-from biomes import biome_data, Biome, determine_special_features, determine_livestock, generate_resource_map_ca
-from rivers import generate_multiple_rivers
+from .terrain import generate_elevation, generate_temperature, generate_moisture, adjust_moisture_for_rivers
+from .biomes import biome_data, Biome, determine_special_features, determine_livestock, generate_resource_map_ca
+from .rivers import generate_multiple_rivers
 
 class MapGenerator:
     def __init__(self, map_size):

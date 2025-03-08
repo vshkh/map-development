@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import networkx as nx
 import matplotlib.patches as mpatches
 
 def plot_livestock_map(biome_map):
@@ -210,6 +211,20 @@ def plot_resource_map(biome_map, resource_map):
 
     plt.show()
 
+def plot_resource_trends(turns, population_data, avg_supply_data, num_villages_data):
+    """Generates a graph tracking village statistics over time."""
+    plt.figure(figsize=(10, 6))
+    plt.plot(turns, population_data, label="Total Population", marker='o', linestyle='-')
+    plt.plot(turns, avg_supply_data, label="Average Supply", marker='s', linestyle='--')
+    plt.plot(turns, num_villages_data, label="Number of Villages", marker='^', linestyle='-.')
+    
+    plt.xlabel("Turns")
+    plt.ylabel("Statistics")
+    plt.title("Village Growth & Survival Trends Over Time")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
 def plot_combined_maps(biome_map, river_map, resource_map):
     """
     Generates a side-by-side visualization of the Biome Map, Livestock Map (scatter), and Resource Map (scatter).
@@ -394,4 +409,34 @@ def plot_migration_events(migration_log):
     ax.set_ylabel("Number of Migrants")
     ax.legend()
     ax.grid(True)
+    plt.show()
+
+def plot_relationship_graph(relationship_manager):
+    """Visualizes village relationships as a graph."""
+    G = nx.Graph()
+
+    # Add nodes (villages)
+    for village_id in relationship_manager.relationships:
+        G.add_node(village_id)
+
+    # Add edges (relationships)
+    edge_colors = []
+    edge_weights = []
+    for village_id, relations in relationship_manager.relationships.items():
+        for other_id, score in relations.items():
+            if village_id < other_id:  # Avoid duplicate edges (undirected graph)
+                G.add_edge(village_id, other_id)
+                edge_colors.append("green" if score > 0 else "red")
+                edge_weights.append(abs(score) / 50)  # Normalize weight for visibility
+
+    # Draw the graph
+    plt.figure(figsize=(10, 6))
+    pos = nx.spring_layout(G, seed=42)  # Position nodes nicely
+    nx.draw(G, pos, with_labels=True, node_color="lightblue", edge_color=edge_colors, width=edge_weights, font_size=10, node_size=500)
+    
+    # Create a legend
+    red_patch = mpatches.Patch(color='red', label='Hostile (-)')
+    green_patch = mpatches.Patch(color='green', label='Friendly (+)')
+    plt.legend(handles=[red_patch, green_patch], loc="upper right")
+    plt.title("Village Relationship Graph")
     plt.show()

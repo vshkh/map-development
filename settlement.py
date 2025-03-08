@@ -1,30 +1,54 @@
 import random
+import uuid
+
+CHANCE_OF_MIGRATION = 0.2
 
 class Settlement:
+
     def __init__(self, start_x, start_y, biome_map):
+        # Assign a unique identifier to the settlement, which should aid with tracking:
+        #self.id = uuid.uuid1()
+        
+        # Determines state, if collapsed or active:
+        self.is_active = True
+
+        # Maintain track of the starting coordinate.
         self.position = (start_x, start_y)
+
+        # Maintain track of starting tiles.
         self.controlled_tiles = {(start_x, start_y)}
+
+        # Initial population (subject to change, need to find and develop scale).
         self.population = 50
+
+        # Starting resources.
         self.resources = {
             "supply": 50,
             "storage": 50,
             "security": 50,
             "satisfaction": 50,
         }
+
+        # Keep track of met civilizations, create a dictionary to keep track of existing civilizations?
+        self.met_settlements = []
+
+        # Keeping track of the biome map
         self.biome_map = biome_map
+        
+        # To be explored eventually...
         self.tier = "Hamlet"
     
     def evolve_settlement(self):
         """Handles settlement evolution based on population and conditions."""
         if self.tier == "Hamlet" and self.population >= 100 and len(self.controlled_tiles) >= 3 and self.resources["security"] >= 50:
             self.tier = "Village"
-            print("Hamlet promoted to Village!")
+            #print("Hamlet promoted to Village!")
         elif self.tier == "Village" and self.population >= 500 and self.resources["satisfaction"] >= 60:
             self.tier = "Town"
-            print("Village promoted to Town!")
+            #print("Village promoted to Town!")
         elif self.tier == "Town" and self.population >= 1000 and len(self.controlled_tiles) >= 10 and self.resources["security"] >= 80:
             self.tier = "City-State"
-            print("Town promoted to City-State!")
+            #print("Town promoted to City-State, and a sense of nationalism rises within the population!")
     
     def update_population(self):
         """Adjusts population growth dynamically, slowing as population increases."""
@@ -63,7 +87,7 @@ class Settlement:
             self.population = max(0, self.population - migrating_pop)
 
             # Instead of just leaving, migrants try to form a new village
-            if random.random() < 0.2:  # 20% chance of forming a new village
+            if random.random() < CHANCE_OF_MIGRATION: 
                 print(f"{migrating_pop} people migrated and founded a new village!")
                 return ("new_village", migrating_pop)  # Signal to World to create a new village
 
@@ -75,6 +99,8 @@ class Settlement:
         self.evolve_settlement()
         
         if self.population <= 0:
-            #print(f"{self.tier} at {self.position} has declined into ruins.")
             return False
         return True
+
+    def update(self):
+        return None

@@ -1,11 +1,13 @@
 from managers import *
 from settlement import Settlement
+import uuid
 
 import random
 
 class Village(Settlement):
     def __init__(self, start_x, start_y, biome_map):
         super().__init__(start_x, start_y, biome_map)
+        self.id = uuid.uuid1()
         self.economy = SupplyManager(self)
         self.security = SecurityManager(self)
         self.satisfaction = SatisfactionManager(self)
