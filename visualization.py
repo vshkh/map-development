@@ -318,125 +318,53 @@ def plot_combined_maps(biome_map, river_map, resource_map):
     plt.tight_layout()
     plt.show()
 
-def plot_village_expansion(biome_map, village_tiles):
-    """
-    Visualizes village expansion on the biome map.
-    
-    Parameters:
-        biome_map (np.array): 2D array of Biome objects.
-        village_tiles (set): Set of (x, y) coordinates controlled by the village.
-    """
-    map_size = biome_map.shape[0]
-    
-    # Define colors for biomes
-    biome_colors = {
-        "Ocean": "#1f77b4", "Coast": "#2ca02c", "Plains": "#bcbd22",
-        "Rainforest": "#17becf", "Desert": "#e377c2", "Tundra": "#7f7f7f",
-        "Mountain": "#8c564b", "Unknown": "#d62728"
-    }
-    
-    # Create a color map for visualization
-    biome_color_map = np.zeros((map_size, map_size, 3))
-    for i in range(map_size):
-        for j in range(map_size):
-            biome_name = biome_map[i, j].name if biome_map[i, j] else "Unknown"
-            color_hex = biome_colors.get(biome_name, "#d62728")
-            biome_color_map[i, j] = tuple(int(color_hex[k:k+2], 16) / 255 for k in (1, 3, 5))
-    
-    # Create figure
-    plt.figure(figsize=(12, 12))
-    plt.imshow(biome_color_map, origin="upper")
-    plt.title("Village Expansion", fontsize=16)
-    
-    # Overlay village-controlled tiles in red
-    village_x, village_y = zip(*village_tiles)
-    plt.scatter(village_y, village_x, color="red", s=20, alpha=0.8, label="Village Territory")
-    
-    # Build legend
-    patches = [mpatches.Patch(color=color, label=biome) for biome, color in biome_colors.items()]
-    plt.legend(handles=patches + [mpatches.Patch(color="red", label="Village")], 
-               bbox_to_anchor=(1.05, 1), loc="upper left")
-    
-    plt.axis("off")
-    plt.show()
 
 def plot_world_map(map_size, biome_map, villages, trade_log, collapsed_villages):
-    """Visualizes the world map with village locations, trade routes, and collapsed villages."""
     fig, ax = plt.subplots(figsize=(10, 10))
-    world_map = np.zeros((map_size, map_size))
-    
-    # Assign colors for biomes
+    biome_color_map = np.zeros((map_size, map_size, 3))
+
+    # Assign RGB colors for biomes
     biome_colors = {
-        "Ocean": 0, "Plains": 1, "Rainforest": 2, "Coast": 3,
-        "Tundra": 4, "Desert": 5, "Mountain": 6
+        "Ocean": (0.1, 0.4, 0.8),        # Deep blue
+        "Plains": (0.6, 0.8, 0.4),       # Light green
+        "Rainforest": (0.0, 0.5, 0.0),   # Dark green
+        "Coast": (0.7, 0.9, 0.6),        # Sandy/green coast
+        "Tundra": (0.8, 0.8, 0.8),       # Light gray
+        "Desert": (0.9, 0.8, 0.5),       # Pale yellow
+        "Mountain": (0.5, 0.5, 0.5),     # Gray
+        "Unknown": (1.0, 0.0, 0.0)       # Red fallback
     }
-    
+
     for i in range(map_size):
         for j in range(map_size):
-            world_map[i, j] = biome_colors.get(biome_map[i, j].name, 7)  # Default color for unknown biomes
-    
-    ax.imshow(world_map, cmap="tab10", origin="upper")
-    
-    # Plot active villages
-    for village in villages:
-        ax.scatter(village.position[1], village.position[0], c="red", s=50, edgecolors="black", label="Active Village" if village == villages[0] else "")
-    
-    # Plot collapsed villages in dark purple
-    for pos in collapsed_villages:
-        ax.scatter(pos[1], pos[0], c="purple", s=50, edgecolors="black", label="Collapsed Village" if pos == collapsed_villages[0] else "")
-    
-    # Plot trade routes
-    for trade in trade_log:
-        v1, v2, success = trade
-        color = "green" if success else "red"  # Green for successful trade, red for failed
-        ax.plot([v1[1], v2[1]], [v1[0], v2[0]], linestyle="--", color=color, linewidth=1.5, alpha=0.7)
-    
-    ax.set_title("World Map with Villages, Trade Routes, and Collapsed Settlements")
+            biome_name = biome_map[i, j].name
+            biome_color_map[i, j] = biome_colors.get(biome_name, biome_colors["Unknown"])
+
+    ax.imshow(biome_color_map, origin="upper")
+    ax.set_title("World Map with Accurate Biome Colors")
     ax.set_xlabel("X Coordinate")
     ax.set_ylabel("Y Coordinate")
-    ax.legend()
+
+    # Build custom legend
+    patches = [mpatches.Patch(color=color, label=biome) for biome, color in biome_colors.items() if biome != "Unknown"]
+    ax.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc="upper left")
+
+    plt.tight_layout()
     plt.show()
 
 def plot_migration_events(migration_log):
-    """Visualizes migration events over time."""
+    """Stubbed migration plot."""
+    if not migration_log:
+        print("No migration data to display.")
+        return
+
     fig, ax = plt.subplots(figsize=(10, 5))
-    turns, migration_counts = zip(*migration_log) if migration_log else ([], [])
-    
+    turns, migration_counts = zip(*migration_log)
+
     ax.plot(turns, migration_counts, marker="o", linestyle="-", color="blue", label="Migration Events")
-    
     ax.set_title("Migration Events Over Time")
     ax.set_xlabel("Turns")
     ax.set_ylabel("Number of Migrants")
     ax.legend()
     ax.grid(True)
-    plt.show()
-
-def plot_relationship_graph(relationship_manager):
-    """Visualizes village relationships as a graph."""
-    G = nx.Graph()
-
-    # Add nodes (villages)
-    for village_id in relationship_manager.relationships:
-        G.add_node(village_id)
-
-    # Add edges (relationships)
-    edge_colors = []
-    edge_weights = []
-    for village_id, relations in relationship_manager.relationships.items():
-        for other_id, score in relations.items():
-            if village_id < other_id:  # Avoid duplicate edges (undirected graph)
-                G.add_edge(village_id, other_id)
-                edge_colors.append("green" if score > 0 else "red")
-                edge_weights.append(abs(score) / 50)  # Normalize weight for visibility
-
-    # Draw the graph
-    plt.figure(figsize=(10, 6))
-    pos = nx.spring_layout(G, seed=42)  # Position nodes nicely
-    nx.draw(G, pos, with_labels=True, node_color="lightblue", edge_color=edge_colors, width=edge_weights, font_size=10, node_size=500)
-    
-    # Create a legend
-    red_patch = mpatches.Patch(color='red', label='Hostile (-)')
-    green_patch = mpatches.Patch(color='green', label='Friendly (+)')
-    plt.legend(handles=[red_patch, green_patch], loc="upper right")
-    plt.title("Village Relationship Graph")
     plt.show()

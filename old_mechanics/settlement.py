@@ -7,10 +7,11 @@ class Settlement:
 
     def __init__(self, start_x, start_y, biome_map):
         # Assign a unique identifier to the settlement, which should aid with tracking:
-        #self.id = uuid.uuid1()
+        self.id = uuid.uuid4()
         
         # Determines state, if collapsed or active:
-        self.is_active = True
+        self.is_active = True  # Added attribute to track if the settlement is collapsed
+        self.collapse_reason = None  # Track the reason for collapse
 
         # Maintain track of the starting coordinate.
         self.position = (start_x, start_y)
@@ -40,27 +41,53 @@ class Settlement:
     
     def evolve_settlement(self):
         """Handles settlement evolution based on population and conditions."""
-        if self.tier == "Hamlet" and self.population >= 100 and len(self.controlled_tiles) >= 3 and self.resources["security"] >= 50:
+        if self.tier == "Hamlet" and self.population >= 80 and len(self.controlled_tiles) >= 3 and self.resources["security"] >= 40:
             self.tier = "Village"
-            #print("Hamlet promoted to Village!")
-        elif self.tier == "Village" and self.population >= 500 and self.resources["satisfaction"] >= 60:
+            print("Hamlet promoted to Village!")
+        elif self.tier == "Village" and self.population >= 400 and self.resources["satisfaction"] >= 50:
             self.tier = "Town"
-            #print("Village promoted to Town!")
-        elif self.tier == "Town" and self.population >= 1000 and len(self.controlled_tiles) >= 10 and self.resources["security"] >= 80:
+            print("Village promoted to Town!")
+        elif self.tier == "Town" and self.population >= 800 and len(self.controlled_tiles) >= 8 and self.resources["security"] >= 70:
             self.tier = "City-State"
-            #print("Town promoted to City-State, and a sense of nationalism rises within the population!")
+            print("Town promoted to City-State, and a sense of nationalism rises within the population!")
     
     def update_population(self):
-        """Adjusts population growth dynamically, slowing as population increases."""
+        """Adjusts population growth dynamically, with diminishing returns as population increases."""
         if self.resources["supply"] <= 0:
-            starvation_loss = random.randint(10, 20)  # Increase starvation impact
+            # Starvation impact increases with population size
+            base_starvation = random.randint(5, 15)
+            population_factor = (self.population / 200) ** 1.2  # Population density increases starvation impact
+            starvation_loss = int(base_starvation * population_factor)
             self.population -= starvation_loss
-            self.resources["satisfaction"] -= random.randint(15, 25)  # More unhappiness
+            self.resources["satisfaction"] -= random.randint(10, 20)
+            if self.population <= 0:
+                self.collapse_reason = "Starvation"
         else:
-            growth_rate = max(1, int(6 - (self.population / 150)))
-            if random.random() < 0.9:
-                self.population += random.randint(1, growth_rate)
+            # Calculate carrying capacity based on resources and territory
+            territory_factor = len(self.controlled_tiles) * 50  # Each tile can support 50 people
+            resource_factor = self.resources["supply"] * 2  # Each supply point can support 2 people
+            carrying_capacity = min(territory_factor, resource_factor)
+            
+            # Calculate growth rate with diminishing returns
+            if self.population < carrying_capacity:
+                # Growth rate decreases as population approaches carrying capacity
+                growth_factor = (carrying_capacity - self.population) / carrying_capacity
+                base_growth = random.randint(1, 3)
+                growth_rate = int(base_growth * growth_factor)
                 
+                # Additional scaling based on population size
+                population_scale = max(0.3, 1 - (self.population / 500))
+                growth_rate = int(growth_rate * population_scale)
+                
+                if random.random() < 0.85:  # Growth chance
+                    self.population += growth_rate
+            else:
+                # Population decline if exceeding carrying capacity
+                if random.random() < 0.3:  # 30% chance of decline when over capacity
+                    decline = random.randint(1, 3)
+                    self.population -= decline
+                    self.resources["satisfaction"] -= 1
+
     def trigger_disaster(self):
         """Random disasters that impact population, supply, or security."""
         disaster_chance = random.random()
@@ -78,6 +105,8 @@ class Settlement:
                 else:
                     self.resources[resource] = max(0, self.resources[resource] + impact)
                 print(f"Disaster: {message}")
+                if self.population <= 0:
+                    self.collapse_reason = message
                 break
 
     def trigger_migration(self):
@@ -85,6 +114,8 @@ class Settlement:
         if self.resources["satisfaction"] < 30 or self.resources["supply"] < 20:
             migrating_pop = random.randint(10, 25)  # Increase migration numbers
             self.population = max(0, self.population - migrating_pop)
+            if self.population <= 0:
+                self.collapse_reason = "Mass Migration"
 
             # Instead of just leaving, migrants try to form a new village
             if random.random() < CHANCE_OF_MIGRATION: 
@@ -93,14 +124,16 @@ class Settlement:
 
     def update(self):
         """Advance one turn of settlement life."""
+        if not self.is_active:
+            return False  # Skip updates if settlement is already collapsed
+
         self.update_population()
         self.trigger_disaster()
         self.trigger_migration()
         self.evolve_settlement()
         
         if self.population <= 0:
+            self.is_active = False  # Mark settlement as collapsed
+            print(f"Settlement {self.id} has collapsed due to {self.collapse_reason}")
             return False
         return True
-
-    def update(self):
-        return None
